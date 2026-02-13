@@ -14,10 +14,8 @@ plugin = {
         "html:target/cucumber-reports/cucumber.html",
         "json:target/cucumber-reports/cucumber.json",
         "com.aventstack.extentreports.cucumber.adapter.ExtentCucumberAdapter:"
-},tags = "",
+},tags = "@Regression",
 		monochrome = true,dryRun=false,publish = true)
-
-
 public class Junit4Runner {
 
 }
