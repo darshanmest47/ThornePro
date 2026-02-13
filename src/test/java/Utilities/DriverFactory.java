@@ -14,13 +14,13 @@ public class DriverFactory {
 		WebDriver driver = new ChromeDriver();
 		tls.set(driver);
 		tls.get().manage().window().maximize();
-		tls.get().get("https://qa-site.thorne.com/");
+		tls.get().get("https://uat-site.thorne.com/");
 	}
-	
-	
+
 	public static WebDriver getWebDriver() {
 		return tls.get();
 	}
+
 	
 	public static void quitDriver() throws Exception{
 		if(tls.get()!=null) {
