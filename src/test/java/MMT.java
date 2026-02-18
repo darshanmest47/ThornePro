@@ -6,7 +6,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class MMT {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         WebDriverManager.chromedriver().setup();
         WebDriver driver = new ChromeDriver();
         driver.manage().window().maximize();
@@ -14,5 +14,7 @@ public class MMT {
 
         WebElement element = driver.findElement(By.xpath("//*[contains(text(),'Flight Tracker')]/ancestor::*[contains(@class,'minContainer')]/preceding-sibling::div/div/div/ul/li[4]/div/p[contains(text(),'My Trips')]"));
         System.out.println(element.getText());
+        Thread.sleep(5000);
+        driver.quit();
     }
 }
