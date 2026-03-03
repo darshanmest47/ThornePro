@@ -1,60 +1,68 @@
 pipeline {
     agent any
 
-    // This block ensures the UI parameters match your script
+    // 1. Define the schedule
+    triggers {
+        // Run at 09:00 AM every day
+        cron('0 9 * * *')
+        // Run at 03:00 PM every day
+        cron('0 15 * * *')
+    }
+
     parameters {
         choice(name: 'RUNNER',
-                choices: ['FailedTestRunner', 'Junit4Runner'],
-                description: 'Select the runner that needs to be executed')
+                choices: ['Junit4Runner', 'FailedTestRunner'],
+                description: 'Manual selection (Scheduled builds auto-select based on time)')
     }
 
     stages {
+        stage('Determine Runner') {
+            steps {
+                script {
+                    // 2. Logic to auto-select the runner based on the current hour
+                    def currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+
+                    if (currentHour == 9) {
+                        env.SELECTED_RUNNER = "Junit4Runner"
+                    } else if (currentHour == 15) {
+                        env.SELECTED_RUNNER = "FailedTestRunner"
+                    } else {
+                        // If triggered manually, use the parameter
+                        env.SELECTED_RUNNER = params.RUNNER
+                    }
+                    echo "Executing: ${env.SELECTED_RUNNER}"
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
-                // Jenkins pulls code from your GitHub repo
-                checkout scm
+                checkout scm //
             }
         }
 
         stage('Run Cucumber Tests') {
             steps {
-                // Executes the Maven command with the parameter selected in Jenkins
-                bat "mvn test -Dtest=${params.RUNNER}"
+                // 3. Use the determined runner
+                bat "mvn test -Dtest=${env.SELECTED_RUNNER}"
             }
         }
     }
 
     post {
         always {
-            // Processes JUnit XML files for the Jenkins "Test Result Trend" chart
-            junit '**/target/surefire-reports/*.xml'
-
-            // Archives the HTML report so it's viewable directly in the Jenkins UI
+            junit '**/target/surefire-reports/*.xml' //
             archiveArtifacts artifacts: 'target/*.html', allowEmptyArchive: true
         }
-
         success {
-            // Sends email using the Email Extension Plugin
             emailext (
-                    subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                    body: """<p>SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'</p>
-                         <p>The tests passed successfully.</p>
-                         <p>View the full report here: <a href='${env.BUILD_URL}artifact/target/cucumber-report.html'>Cucumber HTML Report</a></p>
-                         <p>Check the build details: <a href='${env.BUILD_URL}'>${env.JOB_NAME} Build #${env.BUILD_NUMBER}</a></p>""",
-                    to: 'darshanmesta47@hotmail.com', // Your verified recipient
-                    mimeType: 'text/html'
-            )
-        }
-
-        failure {
-            emailext (
-                    subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                    body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'</p>
-                         <p>The build failed. Please check the logs to identify the issue.</p>
-                         <p>Console Output: <a href='${env.BUILD_URL}console'>View Console Logs</a></p>""",
-                    to: 'darshanmesta47@hotmail.com',
+                    subject: "SUCCESS: ${env.SELECTED_RUNNER} [${env.BUILD_NUMBER}]",
+                    body: "Scheduled run for ${env.SELECTED_RUNNER} passed!",
+                    to: 'darshanmesta47@hotmail.com', //
                     mimeType: 'text/html'
             )
         }
     }
 }
+
+
